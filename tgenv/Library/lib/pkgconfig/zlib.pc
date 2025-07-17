@@ -1,0 +1,13 @@
+prefix=D:/Timeguard/tgenv/Library
+exec_prefix=D:/Timeguard/tgenv/Library
+libdir=D:/Timeguard/tgenv/Library/lib
+sharedlibdir=D:/Timeguard/tgenv/Library/lib
+includedir=D:/Timeguard/tgenv/Library/include
+
+Name: zlib
+Description: zlib compression library
+Version: 1.2.13
+
+Requires:
+Libs: -L${libdir} -L${sharedlibdir} -lz
+Cflags: -I${includedir}

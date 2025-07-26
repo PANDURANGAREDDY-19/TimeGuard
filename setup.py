@@ -13,7 +13,7 @@ setup(
     name = 'TimeGuard',
     packages = find_packages(),
     version = '0.1.0',
-    description = 'A Python package for time tracking and management',
+    description = 'A machine learning-powered application for student time management and task monitoring',
     author = 'Pandurangareddy Kotte',
     author_email = 'kottepandurangareddy@gmail.com',
     maintainer="Tippu Salma",

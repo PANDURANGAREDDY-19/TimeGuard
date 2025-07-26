@@ -66,27 +66,3 @@ class DataIngestion:
             logging.error(f"Error in data ingestion: {e}")
             raise CustomException(e, sys)
     
-    def _create_sample_data(self):
-        """
-        Create sample data for development purposes
-        """
-        import numpy as np
-        np.random.seed(42)
-        
-        n_samples = 100
-        
-        # Sample data with student tasks and time allocations
-        data = {
-            'student_id': list(range(1, n_samples + 1)),
-            'task_type': np.random.choice(['Coding Problem', 'Assignment', 'Reading', 'Project'], n_samples),
-            'difficulty_level': np.random.choice([1, 2, 3, 4, 5], n_samples),
-            'estimated_time_minutes': np.random.choice([30, 45, 60, 90, 120], n_samples),
-            'actual_time_minutes': np.random.choice([35, 50, 70, 100, 130], n_samples),
-            'completed_successfully': np.random.choice([True, False], n_samples, p=[0.8, 0.2]),
-            'focus_score': np.random.choice([5, 6, 7, 8, 9], n_samples),
-            'time_of_day': np.random.choice(['Morning', 'Afternoon', 'Evening', 'Night'], n_samples),
-            'day_of_week': np.random.choice(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], n_samples),
-            'deviation_minutes': np.random.choice([5, 10, -5, -10, 15], n_samples)
-        }
-        
-        return pd.DataFrame(data)

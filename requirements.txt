@@ -1,0 +1,10 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Flask-Migrate
+psycopg2-binary
+Werkzeug
+scikit-learn
+numpy
+pandas
+python-dotenv

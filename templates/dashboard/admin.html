@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-2 text-center">
+        <img src="{{ url_for('static', filename='uploads/' + current_user.profile_photo) }}" class="rounded-circle" width="90" height="90" alt="Profile Photo" onerror="this.onerror=null;this.src='https://via.placeholder.com/90x90/6c757d/ffffff?text=USER';">
+        <div class="mt-2 fw-bold">{{ current_user.username }}</div>
+    </div>
+    <div class="col-md-10">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3>{{ users|length }}</h3>
+                        <small>Total Users</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3>{{ total_tasks }}</h3>
+                        <small>Total Tasks</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3>{{ completed_tasks }}</h3>
+                        <small>Completed Tasks</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>User Activity Overview</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="activityChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                {% for task in recent_tasks %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <strong>{{ task.title }}</strong><br>
+                        <small>{{ task.user.username }}</small>
+                    </div>
+                    <span class="badge bg-{{ 'success' if task.status == 'completed' else 'primary' }}">
+                        {{ task.status.replace('_', ' ').title() }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>All Users</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Tasks</th>
+                                <th>Completed</th>
+                                <th>Join Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.tasks|length }}</td>
+                                <td>{{ Task.query.filter_by(user_id=user.id, status='completed').count() }}</td>
+                                <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-info" onclick="viewUserTaskHistory({{ user.id }}, '{{ user.username }}')">
+                                        View Task History
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+// User Activity Overview Chart: show total time spent and number of tasks per day of week
+fetch('/api/analytics/activity/weekly')
+    .then(response => response.json())
+    .then(data => {
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        const labels = data.map(d => d.day);
+        const totalTime = data.map(d => d.total_time);
+        const taskCount = data.map(d => d.task_count);
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Total Time Spent (h)',
+                        data: totalTime,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'Number of Tasks',
+                        data: taskCount,
+                        type: 'line',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        yAxisID: 'y1',
+                        tension: 0.2,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.dataset.label === 'Total Time Spent (h)') {
+                                    return 'Total Time: ' + context.parsed.y + ' h';
+                                } else if (context.dataset.label === 'Number of Tasks') {
+                                    return 'Tasks: ' + context.parsed.y;
+                                }
+                                return context.dataset.label + ': ' + context.parsed.y;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        title: { display: true, text: 'Total Time (h)' }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        title: { display: true, text: 'Number of Tasks' },
+                        grid: { drawOnChartArea: false }
+                    }
+                }
+            }
+        });
+    });
+
+function viewUserTaskHistory(userId, username) {
+    fetch(`/api/tasks/user/${userId}/history`)
+        .then(response => response.json())
+        .then(data => {
+            let html = `<h6>Task History for <b>${username}</b></h6>`;
+            if (data.length === 0) {
+                html += '<p>No tasks found.</p>';
+            } else {
+                html += `<div class='table-responsive'><table class='table table-bordered table-sm'><thead><tr><th>Title</th><th>Status</th><th>Priority</th><th>Category</th><th>Created</th><th>Started</th><th>Completed</th><th>Actual Time (h)</th></tr></thead><tbody>`;
+                for (const t of data) {
+                    html += `<tr><td>${t.title}</td><td>${t.status}</td><td>${t.priority}</td><td>${t.category || ''}</td><td>${t.created_at}</td><td>${t.started_at}</td><td>${t.completed_at}</td><td>${t.actual_time !== null ? t.actual_time : ''}</td></tr>`;
+                }
+                html += '</tbody></table></div>';
+            }
+            document.getElementById('taskHistoryModalTitle').textContent = `Task History - ${username}`;
+            document.getElementById('taskHistoryModalBody').innerHTML = html;
+            const modal = new bootstrap.Modal(document.getElementById('userTaskHistoryModal'));
+            modal.show();
+        });
+}
+// User Task History Modal (should only be defined once, outside the table row)
+</script>
+<div class="modal fade" id="userTaskHistoryModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="taskHistoryModalTitle">User Task History</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="taskHistoryModalBody">
+        <!-- Task history content will be injected here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

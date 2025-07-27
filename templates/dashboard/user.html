@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-2 text-center">
+        <img src="{{ url_for('static', filename='uploads/' + current_user.profile_photo) }}" class="rounded-circle" width="90" height="90" alt="Profile Photo" onerror="this.onerror=null;this.src='https://via.placeholder.com/90x90/6c757d/ffffff?text=USER';">
+        <div class="mt-2 fw-bold">{{ current_user.username }}</div>
+    </div>
+    <div class="col-md-10">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5>{{ total_tasks }}</h5>
+                        <small>Total Tasks</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5>{{ completed_tasks }}</h5>
+                        <small>Completed</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5>{{ pending_tasks }}</h5>
+                        <small>Pending</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#taskModal">
+                    <i class="fas fa-plus"></i> Add Task
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>My Tasks</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Priority</th>
+                                <th>Estimated Time</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tasksTable">
+                            {% for task in tasks %}
+                            <tr data-task-id="{{ task.id }}">
+                                <td>{{ task.title }}</td>
+                                <td>{{ task.category or 'General' }}</td>
+                                <td><span class="badge bg-{{ 'danger' if task.priority == 'high' else 'warning' if task.priority == 'medium' else 'secondary' }}">{{ task.priority.title() }}</span></td>
+                                <td>{{ "%.1f"|format(task.estimated_time) }}h</td>
+                                <td><span class="badge bg-{{ 'success' if task.status == 'completed' else 'primary' if task.status == 'in_progress' else 'secondary' }}">{{ task.status.replace('_', ' ').title() }}</span></td>
+                                <td>
+                                    {% if task.status != 'completed' %}
+                                    <div id="timer-{{ task.id }}" class="mb-1" style="font-size:0.95em;"></div>
+                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="startStopwatch({{ task.id }})" id="start-btn-{{ task.id }}">Start</button>
+                                    <button class="btn btn-sm btn-outline-secondary me-1" onclick="stopStopwatch({{ task.id }})" id="stop-btn-{{ task.id }}" style="display:none;">Stop</button>
+                                    <button class="btn btn-sm btn-success" onclick="completeTask({{ task.id }})">Complete</button>
+                                    {% endif %}
+                                    <button class="btn btn-sm btn-danger" onclick="deleteTask({{ task.id }})">Delete</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Task Modal -->
+<div class="modal fade" id="taskModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm">
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <input type="text" class="form-control" name="category" placeholder="e.g., Development, Meeting">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Priority</label>
+                        <select class="form-control" name="priority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createTask()">Create Task</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

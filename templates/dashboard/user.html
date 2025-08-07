@@ -51,7 +51,7 @@
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table">
+<table class="table" role="table" aria-label="My Tasks">
                         <thead>
                             <tr>
                                 <th>Title</th>
@@ -68,16 +68,24 @@
                                 <td>{{ task.title }}</td>
                                 <td>{{ task.category or 'General' }}</td>
                                 <td><span class="badge bg-{{ 'danger' if task.priority == 'high' else 'warning' if task.priority == 'medium' else 'secondary' }}">{{ task.priority.title() }}</span></td>
-                                <td>{{ "%.1f"|format(task.estimated_time) }}h</td>
+                                <td>
+                                    {% if task.estimated_time is not none %}
+                                        {% set total_seconds = (task.estimated_time * 3600)|round(0, 'floor') %}
+                                        {% set h = (total_seconds // 3600)|int %}
+                                        {% set m = ((total_seconds % 3600) // 60)|int %}
+                                        {% set s = (total_seconds % 60)|int %}
+                                        {{ '%02d:%02d:%02d' % (h, m, s) }}
+                                    {% else %}-{% endif %}
+                                </td>
                                 <td><span class="badge bg-{{ 'success' if task.status == 'completed' else 'primary' if task.status == 'in_progress' else 'secondary' }}">{{ task.status.replace('_', ' ').title() }}</span></td>
                                 <td>
                                     {% if task.status != 'completed' %}
                                     <div id="timer-{{ task.id }}" class="mb-1" style="font-size:0.95em;"></div>
-                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="startStopwatch({{ task.id }})" id="start-btn-{{ task.id }}">Start</button>
-                                    <button class="btn btn-sm btn-outline-secondary me-1" onclick="stopStopwatch({{ task.id }})" id="stop-btn-{{ task.id }}" style="display:none;">Stop</button>
-                                    <button class="btn btn-sm btn-success" onclick="completeTask({{ task.id }})">Complete</button>
+<button class="btn btn-sm btn-outline-primary me-1" onclick="startStopwatch({{ task.id }})" id="start-btn-{{ task.id }}" tabindex="0" aria-label="Start Task {{ task.title }}" role="button"><i class="fas fa-play" aria-hidden="true"></i> Start</button>
+<button class="btn btn-sm btn-outline-secondary me-1" onclick="stopStopwatch({{ task.id }})" id="stop-btn-{{ task.id }}" style="display:none;" tabindex="0" aria-label="Stop Task {{ task.title }}" role="button"><i class="fas fa-stop" aria-hidden="true"></i> Stop</button>
+<button class="btn btn-sm btn-success me-1" onclick="completeTask({{ task.id }})" tabindex="0" aria-label="Complete Task {{ task.title }}" role="button"><i class="fas fa-check" aria-hidden="true"></i> Complete</button>
                                     {% endif %}
-                                    <button class="btn btn-sm btn-danger" onclick="deleteTask({{ task.id }})">Delete</button>
+<button class="btn btn-sm btn-danger" onclick="deleteTask({{ task.id }})" tabindex="0" aria-label="Delete Task {{ task.title }}" role="button"><i class="fas fa-trash" aria-hidden="true"></i> Delete</button>
                                 </td>
                             </tr>
                             {% endfor %}

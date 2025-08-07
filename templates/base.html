@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="{{ current_user.theme_preference if current_user.is_authenticated else 'light' }}">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,37 +8,33 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 </head>
+
 <body>
+    <!-- Loading Spinner -->
+    <div class="spinner" id="loadingSpinner">
+        <div class="loader"></div>
+    </div>
+
     {% if current_user.is_authenticated %}
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="#"><i class="fas fa-clock"></i> TimeGuard</a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{% if current_user.is_admin %}{{ url_for('dashboard.admin') }}{% else %}{{ url_for('dashboard.user') }}{% endif %}">
-                    <i class="fas fa-home"></i> Home
-                </a>
-                <div class="dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        {{ current_user.username }}
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ url_for('dashboard.profile') }}">Profile</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
-                    </ul>
-                </div>
+                <a class="nav-link" href="{% if current_user.is_admin %}{{ url_for('dashboard.admin') }}{% else %}{{ url_for('dashboard.user') }}{% endif %}"><i class="fas fa-home"></i> Home</a>
+                <a class="nav-link" href="{{ url_for('dashboard.profile') }}"><i class="fas fa-user"></i> Profile</a>
+                <a class="nav-link" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>
     </nav>
     {% endif %}
 
     <main class="container mt-4">
-        {% with messages = get_flashed_messages() %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-info alert-dismissible fade show">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 {% endfor %}
             {% endif %}
@@ -49,6 +45,16 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script>
+        // Loading spinner show/hide example (call showSpinner/hideSpinner in your JS)
+        window.showSpinner = function() {
+            document.getElementById('loadingSpinner').classList.add('active');
+        }
+        window.hideSpinner = function() {
+            document.getElementById('loadingSpinner').classList.remove('active');
+        }
+    </script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>

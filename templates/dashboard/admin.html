@@ -97,8 +97,8 @@
                                 <td>{{ Task.query.filter_by(user_id=user.id, status='completed').count() }}</td>
                                 <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-info" onclick="viewUserTaskHistory({{ user.id }}, '{{ user.username }}')">
-                                        View Task History
+                                    <button class="btn btn-sm btn-info" onclick="viewUserTaskHistory({{ user.id }}, '{{ user.username }}')" tabindex="0" aria-label="View Task History for {{ user.username }}">
+                                        <i class="fas fa-history" aria-hidden="true"></i> View Task History
                                     </button>
                                 </td>
                             </tr>
@@ -123,13 +123,21 @@ fetch('/api/analytics/activity/weekly')
         const labels = data.map(d => d.day);
         const totalTime = data.map(d => d.total_time);
         const taskCount = data.map(d => d.task_count);
+        // Helper to format hours as hh:mm:ss
+        function formatHoursToHMS(hours) {
+            const totalSeconds = Math.round(hours * 3600);
+            const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+            const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+            const s = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
         new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [
                     {
-                        label: 'Total Time Spent (h)',
+                        label: 'Total Time Spent',
                         data: totalTime,
                         backgroundColor: 'rgba(54, 162, 235, 0.6)',
                         yAxisID: 'y',
@@ -153,8 +161,8 @@ fetch('/api/analytics/activity/weekly')
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                if (context.dataset.label === 'Total Time Spent (h)') {
-                                    return 'Total Time: ' + context.parsed.y + ' h';
+                                if (context.dataset.label === 'Total Time Spent') {
+                                    return 'Total Time: ' + formatHoursToHMS(context.parsed.y);
                                 } else if (context.dataset.label === 'Number of Tasks') {
                                     return 'Tasks: ' + context.parsed.y;
                                 }
@@ -167,7 +175,12 @@ fetch('/api/analytics/activity/weekly')
                     y: {
                         beginAtZero: true,
                         position: 'left',
-                        title: { display: true, text: 'Total Time (h)' }
+                        title: { display: true, text: 'Total Time (hh:mm:ss)' },
+                        ticks: {
+                            callback: function(value) {
+                                return formatHoursToHMS(value);
+                            }
+                        }
                     },
                     y1: {
                         beginAtZero: true,
@@ -184,17 +197,52 @@ function viewUserTaskHistory(userId, username) {
     fetch(`/api/tasks/user/${userId}/history`)
         .then(response => response.json())
         .then(data => {
-            let html = `<h6>Task History for <b>${username}</b></h6>`;
+            let html = `<div class='mb-3 text-center'>
+                <span class='fs-5 fw-bold'><i class='fas fa-history text-primary'></i> Task History for <b>${username}</b></span>
+            </div>`;
             if (data.length === 0) {
-                html += '<p>No tasks found.</p>';
+                html += '<div class="alert alert-info text-center">No tasks found.</div>';
             } else {
-                html += `<div class='table-responsive'><table class='table table-bordered table-sm'><thead><tr><th>Title</th><th>Status</th><th>Priority</th><th>Category</th><th>Created</th><th>Started</th><th>Completed</th><th>Actual Time (h)</th></tr></thead><tbody>`;
+                html += `<div class='table-responsive'><table class='table table-hover align-middle'>
+                <thead class='table-light'>
+                <tr>
+                    <th><i class='fas fa-tasks'></i> Title</th>
+                    <th><i class='fas fa-flag'></i> Status</th>
+                    <th><i class='fas fa-bolt'></i> Priority</th>
+                    <th><i class='fas fa-layer-group'></i> Category</th>
+                    <th><i class='fas fa-calendar-plus'></i> Created</th>
+                    <th><i class='fas fa-hourglass-start'></i> Started</th>
+                    <th><i class='fas fa-calendar-check'></i> Completed</th>
+                    <th><i class='fas fa-clock'></i> Actual Time</th>
+                </tr></thead><tbody>`;
                 for (const t of data) {
-                    html += `<tr><td>${t.title}</td><td>${t.status}</td><td>${t.priority}</td><td>${t.category || ''}</td><td>${t.created_at}</td><td>${t.started_at}</td><td>${t.completed_at}</td><td>${t.actual_time !== null ? t.actual_time : ''}</td></tr>`;
+                    // Format datetimes as ISO 8601 (YYYY-MM-DD HH:mm)
+                    const created = t.created_at ? new Date(t.created_at.replace(' ', 'T')).toLocaleString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
+                    const started = t.started_at ? new Date(t.started_at.replace(' ', 'T')).toLocaleString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
+                    const completed = t.completed_at ? new Date(t.completed_at.replace(' ', 'T')).toLocaleString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
+                    // Format actual_time as hh:mm:ss if present
+                    let actualTime = '-';
+                    if (t.actual_time !== null && t.actual_time !== undefined) {
+                        const totalSeconds = Math.round(t.actual_time * 3600);
+                        const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+                        const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+                        const s = (totalSeconds % 60).toString().padStart(2, '0');
+                        actualTime = `<span class='fw-bold text-primary'>${h}:${m}:${s}</span>`;
+                    }
+                    html += `<tr>
+                        <td>${t.title}</td>
+                        <td><span class='badge bg-${t.status === 'completed' ? 'success' : t.status === 'in_progress' ? 'primary' : 'secondary'} text-capitalize'>${t.status.replace('_',' ')}</span></td>
+                        <td><span class='badge bg-${t.priority === 'high' ? 'danger' : t.priority === 'medium' ? 'warning' : 'secondary'} text-capitalize'>${t.priority}</span></td>
+                        <td>${t.category || ''}</td>
+                        <td>${created}</td>
+                        <td>${started}</td>
+                        <td>${completed}</td>
+                        <td>${actualTime}</td>
+                    </tr>`;
                 }
                 html += '</tbody></table></div>';
             }
-            document.getElementById('taskHistoryModalTitle').textContent = `Task History - ${username}`;
+            document.getElementById('taskHistoryModalTitle').innerHTML = `<i class='fas fa-history text-primary'></i> Task History - <span class='fw-bold'>${username}</span>`;
             document.getElementById('taskHistoryModalBody').innerHTML = html;
             const modal = new bootstrap.Modal(document.getElementById('userTaskHistoryModal'));
             modal.show();
@@ -202,18 +250,18 @@ function viewUserTaskHistory(userId, username) {
 }
 // User Task History Modal (should only be defined once, outside the table row)
 </script>
-<div class="modal fade" id="userTaskHistoryModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="taskHistoryModalTitle">User Task History</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<div class="modal fade" id="userTaskHistoryModal" tabindex="-1" role="dialog" aria-labelledby="taskHistoryModalTitle" aria-modal="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header" style="background: #2050a0; color: #fff;">
+        <h5 class="modal-title w-100 text-center" id="taskHistoryModalTitle" aria-label="User Task History"><i class="fas fa-history"></i> User Task History</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close Task History Modal"></button>
       </div>
-      <div class="modal-body" id="taskHistoryModalBody">
+      <div class="modal-body p-4" id="taskHistoryModalBody" style="background: #f5f7fa; min-height: 300px; color: #1a1a1a;">
         <!-- Task history content will be injected here -->
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      <div class="modal-footer justify-content-center bg-light" role="contentinfo">
+        <button type="button" class="btn btn-outline-primary px-4" data-bs-dismiss="modal" aria-label="Close Task History Modal"><i class="fas fa-times" aria-hidden="true"></i> Close</button>
       </div>
     </div>
   </div>

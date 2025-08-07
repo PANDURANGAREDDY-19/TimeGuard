@@ -16,16 +16,52 @@ class TimePredictor:
     def _get_model_path(self, user_id):
         return f'ml/time_model_{user_id}.pkl'
     
+    def _extract_keywords(self, text, top_n=3):
+        # Simple keyword extraction: most frequent words (excluding stopwords)
+        import re
+        from collections import Counter
+        stopwords = set(['the','and','to','of','in','for','on','at','a','an','is','with','by','as','it','from','this','that','be','are','was','were','or','but','not','your','you'])
+        words = re.findall(r'\w+', (text or '').lower())
+        words = [w for w in words if w not in stopwords and len(w) > 2]
+        most_common = [w for w, _ in Counter(words).most_common(top_n)]
+        return most_common
+
+    def _encode_keywords(self, keywords):
+        # Hash keywords to a fixed-length vector (simple bag-of-words)
+        vec = [0, 0, 0]
+        for i, kw in enumerate(keywords[:3]):
+            vec[i] = hash(kw) % 1000 / 1000  # normalize to [0,1]
+        return vec
+
+    def _user_stats(self, user):
+        # Returns (avg_time, std_time, completed_count)
+        completed = [t.actual_time for t in user.tasks if t.actual_time]
+        if completed:
+            avg = float(np.mean(completed))
+            std = float(np.std(completed))
+            count = len(completed)
+        else:
+            avg, std, count = 1.0, 0.0, 0
+        return avg, std, count
+
     def prepare_features(self, tasks):
         features = []
         for task in tasks:
             if task.actual_time:
+                # NLP features from description
+                keywords = self._extract_keywords(task.description)
+                keyword_vec = self._encode_keywords(keywords)
+                # User stats
+                avg_time, std_time, completed_count = self._user_stats(task.user)
                 feature = [
                     len(task.title),
                     len(task.description or ''),
                     self._encode_category(task.category or 'general'),
                     self._encode_priority(task.priority),
-                    len(task.user.tasks)  # user experience factor
+                    avg_time,
+                    std_time,
+                    completed_count,
+                    *keyword_vec
                 ]
                 features.append(feature)
         return np.array(features)
@@ -68,18 +104,36 @@ class TimePredictor:
         self.model_path = self._get_model_path(user.id)
         if not self.is_trained:
             self._load_model()
+        # NLP features from description
+        keywords = self._extract_keywords(task_data.get('description', ''))
+        keyword_vec = self._encode_keywords(keywords)
+        # User stats
+        avg_time, std_time, completed_count = self._user_stats(user)
         feature = np.array([[
             len(task_data.get('title', '')),
             len(task_data.get('description', '')),
             self._encode_category(task_data.get('category', 'general')),
             self._encode_priority(task_data.get('priority', 'medium')),
-            len(user.tasks)
+            avg_time,
+            std_time,
+            completed_count,
+            *keyword_vec
         ]])
         try:
             prediction = self.model.predict(feature)[0]
             return max(0.1, prediction)  # Minimum 6 minutes
         except Exception as e:
-            print('Warning: ML model not fitted, returning default estimate. Details:', e)
+            # Fallback: use category average for this user
+            print('Warning: ML model not fitted, using category average. Details:', e)
+            category = task_data.get('category', 'general')
+            cat_times = [t.actual_time for t in user.tasks if t.category == category and t.actual_time]
+            if cat_times:
+                return float(np.mean(cat_times))
+            # Fallback: use user average
+            completed = [t.actual_time for t in user.tasks if t.actual_time]
+            if completed:
+                return float(np.mean(completed))
+            # Fallback: global average (could be improved)
             return 1.0
     
     def detect_deviation(self, task):

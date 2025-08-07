@@ -8,17 +8,41 @@
                 <h4><i class="fas fa-sign-in-alt"></i> Login</h4>
             </div>
             <div class="card-body">
-                <form method="POST">
+                <form method="POST" id="loginForm" novalidate>
                     <div class="mb-3">
                         <label class="form-label">Username</label>
-                        <input type="text" class="form-control" name="username" required>
+                        <input type="text" class="form-control" name="username" id="loginUsername" required>
+                        <div class="invalid-feedback">Please enter your username.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Password</label>
-                        <input type="password" class="form-control" name="password" required>
+                        <input type="password" class="form-control" name="password" id="loginPassword" required>
+                        <div class="invalid-feedback">Please enter your password.</div>
                     </div>
                     <button type="submit" class="btn btn-primary w-100">Login</button>
                 </form>
+                <script>
+                document.getElementById('loginForm').addEventListener('submit', function(e) {
+                    let valid = true;
+                    const username = document.getElementById('loginUsername');
+                    const password = document.getElementById('loginPassword');
+                    if (username.value.trim() === '') {
+                        username.classList.add('is-invalid');
+                        valid = false;
+                    } else {
+                        username.classList.remove('is-invalid');
+                    }
+                    if (password.value.trim() === '') {
+                        password.classList.add('is-invalid');
+                        valid = false;
+                    } else {
+                        password.classList.remove('is-invalid');
+                    }
+                    if (!valid) {
+                        e.preventDefault();
+                    }
+                });
+                </script>
                 <div class="text-center mt-3">
                     <a href="{{ url_for('auth.register') }}">Don't have an account? Register</a>
                 </div>

@@ -50,8 +50,15 @@ def user():
 @login_required
 def profile():
     if request.method == 'POST':
+        from email_validator import validate_email, EmailNotValidError
         current_user.username = request.form['username']
-        current_user.email = request.form['email']
+        email = request.form['email']
+        try:
+            valid = validate_email(email)
+            current_user.email = valid.email
+        except EmailNotValidError as e:
+            flash(f'Invalid email address: {str(e)}', 'danger')
+            return redirect(url_for('dashboard.profile'))
         current_user.theme_preference = request.form.get('theme', 'default')
         
         # Handle profile photo upload

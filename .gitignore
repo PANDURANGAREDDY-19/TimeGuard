@@ -38,3 +38,6 @@ Thumbs.db
 .coverage
 htmlcov/
 .pytest_cache/
+
+# Config
+config.py

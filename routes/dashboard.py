@@ -52,7 +52,7 @@ def profile():
     if request.method == 'POST':
         current_user.username = request.form['username']
         current_user.email = request.form['email']
-        current_user.theme_preference = request.form['theme']
+        current_user.theme_preference = request.form.get('theme', 'default')
         
         # Handle profile photo upload
         if 'profile_photo' in request.files:

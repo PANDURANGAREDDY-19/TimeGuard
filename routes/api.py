@@ -1,13 +1,30 @@
-from flask import Blueprint, request, jsonify
+
+from flask import Blueprint, request, jsonify, render_template_string
 from flask_login import login_required, current_user
 from models.task import Task
 from models.user import User
 from ml.time_predictor import TimePredictor
 from app import db
 from datetime import datetime
+from utils.email_utils import send_task_history_email, generate_task_history_text
 
 api_bp = Blueprint('api', __name__)
 predictor = TimePredictor()
+
+# Send user task history to their email (admin only)
+@api_bp.route('/tasks/user/<int:user_id>/send_history', methods=['POST'])
+@login_required
+def send_user_task_history(user_id):
+    try:
+        if not current_user.is_admin:
+            return jsonify({'error': 'Access denied'}), 403
+        user = User.query.get_or_404(user_id)
+        tasks = Task.query.filter_by(user_id=user.id).order_by(Task.created_at.desc()).all()
+        text = generate_task_history_text(user, tasks)
+        send_task_history_email(user.email, f"Your Task History - {user.username}", text)
+        return jsonify({'message': f'Task history sent to {user.email}.'})
+    except Exception as e:
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 @api_bp.route('/analytics/activity/weekly')
 @login_required

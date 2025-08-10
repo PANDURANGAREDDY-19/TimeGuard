@@ -19,6 +19,8 @@ function startStopwatch(taskId) {
         sw.interval = setInterval(() => {
             const elapsed = sw.elapsed + (Date.now() - sw.start);
             document.getElementById(`timer-${taskId}`).textContent = formatTime(elapsed);
+            // --- Browser Tab Timer ---
+            document.title = `⏳ ${formatTime(elapsed)} | TimeGuard`;
         }, 1000);
         document.getElementById(`start-btn-${taskId}`).style.display = 'none';
         document.getElementById(`stop-btn-${taskId}`).style.display = '';
@@ -34,6 +36,8 @@ function stopStopwatch(taskId) {
         document.getElementById(`timer-${taskId}`).textContent = formatTime(sw.elapsed);
         document.getElementById(`start-btn-${taskId}`).style.display = '';
         document.getElementById(`stop-btn-${taskId}`).style.display = 'none';
+        // Reset tab title when stopped
+        document.title = 'TimeGuard';
         // Prompt to save as actual_time
         if (confirm('Save this time as actual time for the task?')) {
             const hours = (sw.elapsed / 3600000).toFixed(2);

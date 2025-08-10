@@ -5,10 +5,10 @@ class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
-    estimated_time = db.Column(db.Float)  # in hours
-    actual_time = db.Column(db.Float)  # in hours
-    status = db.Column(db.String(20), default='pending')  # pending, in_progress, completed
-    priority = db.Column(db.String(10), default='medium')  # low, medium, high
+    estimated_time = db.Column(db.Float)  
+    actual_time = db.Column(db.Float)  
+    status = db.Column(db.String(20), default='pending')  
+    priority = db.Column(db.String(10), default='medium') 
     category = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     started_at = db.Column(db.DateTime)
@@ -22,4 +22,4 @@ class Task(db.Model):
     
     def is_overdue(self):
         if self.estimated_time and self.actual_time:
-            return self.actual_time > self.estimated_time * 1.2  # 20% threshold
+            return self.actual_time > self.estimated_time * 1.2  

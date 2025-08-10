@@ -11,7 +11,6 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     profile_photo = db.Column(db.String(255), default='default.jpg')
-    theme_preference = db.Column(db.String(10), default='light')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     tasks = db.relationship('Task', backref='user', lazy=True, cascade='all, delete-orphan')
@@ -21,5 +20,3 @@ class User(UserMixin, db.Model):
     
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-
-# User loader moved to app.py

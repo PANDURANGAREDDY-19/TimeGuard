@@ -28,13 +28,7 @@
                                 <label class="form-label">Email</label>
                                 <input type="email" class="form-control" name="email" value="{{ current_user.email }}" required>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Theme Preference</label>
-                                <select class="form-control" name="theme" onchange="toggleTheme(this.value)">
-                                    <option value="light" {{ 'selected' if current_user.theme_preference == 'light' }}>Light</option>
-                                    <option value="dark" {{ 'selected' if current_user.theme_preference == 'dark' }}>Dark</option>
-                                </select>
-                            </div>
+                            <!-- Theme preference selection removed -->
                             <button type="submit" class="btn btn-primary">Update Profile</button>
                         </div>
                     </div>
@@ -55,10 +49,6 @@ function previewImage(input) {
         };
         reader.readAsDataURL(input.files[0]);
     }
-}
-
-function toggleTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
 }
 </script>
 {% endblock %}

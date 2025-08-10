@@ -8,3 +8,5 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
     UPLOAD_FOLDER = 'static/uploads'
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    SMTP_USER = 'kottepandurangareddy@gmail.com'
+    SMTP_PASSWORD = 'okzv zkwy erkt qnmb'

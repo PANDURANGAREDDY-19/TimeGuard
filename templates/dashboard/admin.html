@@ -100,6 +100,9 @@
                                     <button class="btn btn-sm btn-info" onclick="viewUserTaskHistory({{ user.id }}, '{{ user.username }}')" tabindex="0" aria-label="View Task History for {{ user.username }}">
                                         <i class="fas fa-history" aria-hidden="true"></i> View Task History
                                     </button>
+                                    <button class="btn btn-sm btn-outline-primary ms-1" onclick="sendTaskHistoryEmail({{ user.id }}, '{{ user.email }}')" tabindex="0" aria-label="Send Task History to {{ user.email }}">
+                                        <i class="fas fa-envelope" aria-hidden="true"></i> Email Task History
+                                    </button>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -114,6 +117,24 @@
 
 {% block scripts %}
 <script>
+
+// Send user task history to their email
+function sendTaskHistoryEmail(userId, userEmail) {
+    if (!confirm(`Send task history to ${userEmail}?`)) return;
+    fetch(`/api/tasks/user/${userId}/send_history`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            alert(data.message);
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(err => alert('Error: ' + err));
+}
 
 // User Activity Overview Chart: show total time spent and number of tasks per day of week
 fetch('/api/analytics/activity/weekly')

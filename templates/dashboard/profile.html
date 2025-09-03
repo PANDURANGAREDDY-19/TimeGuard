@@ -1,38 +1,177 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h4><i class="fas fa-user"></i> Profile Settings</h4>
+<!-- Header Section -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0"><i class="fas fa-user-cog text-primary me-2"></i>Profile Settings</h4>
+        <small class="text-muted">Manage your account information and preferences</small>
+    </div>
+    <div>
+        {% if current_user.is_admin %}
+        <span class="badge bg-warning text-dark"><i class="fas fa-crown"></i> Administrator</span>
+        {% else %}
+        <span class="badge bg-primary"><i class="fas fa-user"></i> User</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Profile Information Card -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 text-center">
+                <h5 class="card-title mb-0"><i class="fas fa-id-card text-primary me-2"></i>Profile Photo</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="position-relative d-inline-block mb-3">
+                    <img src="{{ url_for('static', filename='uploads/' + current_user.profile_photo) }}" 
+                         class="rounded-circle border border-3 border-light shadow" width="120" height="120" id="profilePreview" 
+                         alt="Profile Photo" onerror="this.src='https://via.placeholder.com/120x120/6c757d/ffffff?text={{ current_user.username[0].upper() }}';">
+                    <div class="position-absolute bottom-0 end-0">
+                        <label for="profilePhotoInput" class="btn btn-primary btn-sm rounded-circle" style="width: 35px; height: 35px; cursor: pointer;">
+                            <i class="fas fa-camera"></i>
+                        </label>
+                    </div>
+                </div>
+                <h6 class="fw-bold">{{ current_user.username }}</h6>
+                <p class="text-muted mb-0">{{ current_user.email }}</p>
+                <small class="text-muted">Member since {{ current_user.created_at|ist_datetime('%b %Y') }}</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Account Settings Card -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0"><i class="fas fa-cog text-primary me-2"></i>Account Information</h5>
             </div>
             <div class="card-body">
                 <form method="POST" enctype="multipart/form-data">
-                    <div class="row">
-                        <div class="col-md-4 text-center">
-                            <img src="{{ url_for('static', filename='uploads/' + current_user.profile_photo) }}" 
-                                 class="rounded-circle mb-3" width="150" height="150" id="profilePreview" 
-                                 alt="Profile Photo" onerror="this.onerror=null;this.src='https://via.placeholder.com/150x150/6c757d/ffffff?text=USER';">
-                            <div class="mb-3">
-                                <label class="form-label">Profile Photo</label>
-                                <input type="file" class="form-control" name="profile_photo" accept="image/*" onchange="previewImage(this)">
-                            </div>
+                    <input type="file" id="profilePhotoInput" name="profile_photo" accept="image/*" onchange="previewImage(this)" style="display: none;">
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold"><i class="fas fa-user me-1"></i>Username</label>
+                            <input type="text" class="form-control" name="username" value="{{ current_user.username }}" required>
                         </div>
-                        <div class="col-md-8">
-                            <div class="mb-3">
-                                <label class="form-label">Username</label>
-                                <input type="text" class="form-control" name="username" value="{{ current_user.username }}" required>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold"><i class="fas fa-envelope me-1"></i>Email Address</label>
+                            <input type="email" class="form-control" name="email" value="{{ current_user.email }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Update Profile
+                                </button>
+                                <button type="button" class="btn btn-outline-warning" onclick="resetPassword()">
+                                    <i class="fas fa-key"></i> Change Password
+                                </button>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" name="email" value="{{ current_user.email }}" required>
-                            </div>
-                            <!-- Theme preference selection removed -->
-                            <button type="submit" class="btn btn-primary">Update Profile</button>
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Account Statistics Card -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-line text-primary me-2"></i>Account Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <div class="text-primary mb-2"><i class="fas fa-tasks fa-2x"></i></div>
+                            <h4 class="mb-0">{{ current_user.tasks|length }}</h4>
+                            <small class="text-muted">Total Tasks</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <div class="text-success mb-2"><i class="fas fa-check-circle fa-2x"></i></div>
+                            <h4 class="mb-0">{{ current_user.tasks|selectattr('status', 'equalto', 'completed')|list|length }}</h4>
+                            <small class="text-muted">Completed</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <div class="text-warning mb-2"><i class="fas fa-clock fa-2x"></i></div>
+                            <h4 class="mb-0">{{ current_user.tasks|selectattr('status', 'equalto', 'pending')|list|length }}</h4>
+                            <small class="text-muted">Pending</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <div class="text-info mb-2"><i class="fas fa-percentage fa-2x"></i></div>
+                            <h4 class="mb-0">{{ ((current_user.tasks|selectattr('status', 'equalto', 'completed')|list|length / current_user.tasks|length * 100) if current_user.tasks|length > 0 else 0)|round(1) }}%</h4>
+                            <small class="text-muted">Success Rate</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Password Reset Modal -->
+<div class="modal fade" id="passwordResetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="fas fa-key me-2"></i>Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="step1">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-shield-alt fa-3x text-warning mb-2"></i>
+                        <p class="mb-0">For security, we'll send an OTP to verify your identity.</p>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        OTP will be sent to: <strong>{{ current_user.email }}</strong>
+                    </div>
+                    <div class="text-center">
+                        <button type="button" class="btn btn-primary" onclick="sendOTP()">
+                            <i class="fas fa-paper-plane"></i> Send OTP
+                        </button>
+                    </div>
+                </div>
+                <div id="step2" style="display:none;">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="fas fa-key me-1"></i>Enter OTP</label>
+                        <input type="text" class="form-control text-center" id="otpCode" maxlength="6" placeholder="000000">
+                        <small class="text-muted">Check your email for the 6-digit code</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="fas fa-lock me-1"></i>New Password</label>
+                        <input type="password" class="form-control" id="newPassword" placeholder="Enter new password">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="fas fa-lock me-1"></i>Confirm Password</label>
+                        <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm new password">
+                    </div>
+                    <div class="text-center">
+                        <button type="button" class="btn btn-success" onclick="verifyOTP()">
+                            <i class="fas fa-check"></i> Update Password
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
             </div>
         </div>
     </div>
@@ -49,6 +188,53 @@ function previewImage(input) {
         };
         reader.readAsDataURL(input.files[0]);
     }
+}
+
+function resetPassword() {
+    document.getElementById('step1').style.display = 'block';
+    document.getElementById('step2').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('passwordResetModal')).show();
+}
+
+function sendOTP() {
+    fetch('/auth/profile-reset-password', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('step2').style.display = 'block';
+            alert(data.message);
+        } else {
+            alert(data.message);
+        }
+    });
+}
+
+function verifyOTP() {
+    const otp = document.getElementById('otpCode').value;
+    const password = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+    
+    if (password !== confirm) {
+        alert('Passwords do not match');
+        return;
+    }
+    
+    fetch('/auth/profile-verify-otp', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({otp: otp, password: password})
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('passwordResetModal')).hide();
+        }
+    });
 }
 </script>
 {% endblock %}

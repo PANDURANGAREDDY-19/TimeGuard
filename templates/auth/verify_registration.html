@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>Verify Your Email</h4>
+            </div>
+            <div class="card-body">
+                <p>Enter the 6-digit OTP sent to <strong>{{ email }}</strong></p>
+                <form method="POST">
+                    <input type="hidden" name="email" value="{{ email }}">
+                    <div class="mb-3">
+                        <label for="otp" class="form-label">Verification Code</label>
+                        <input type="text" class="form-control" id="otp" name="otp" maxlength="6" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Verify & Complete Registration</button>
+                    <button type="button" class="btn btn-link" onclick="resendOTP()">Resend OTP</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function resendOTP() {
+    fetch('/auth/resend-registration-otp', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'email={{ email }}'
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+    });
+}
+</script>
+{% endblock %}

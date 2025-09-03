@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-tasks"></i> Assigned Tasks</h4>
+            </div>
+            <div class="card-body">
+                {% if tasks %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Assigned To</th>
+                                <th>Priority</th>
+                                <th>Deadline</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in tasks %}
+                            <tr>
+                                <td>
+                                    <strong>{{ task.title }}</strong>
+                                    {% if task.description %}
+                                    <br><small class="text-muted">{{ task.description[:50] }}{% if task.description|length > 50 %}...{% endif %}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ task.user.username }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'danger' if task.priority == 'high' else 'warning' if task.priority == 'medium' else 'secondary' }}">
+                                        {{ task.priority.title() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if task.deadline %}
+                                        {{ task.deadline|ist_datetime('%Y-%m-%d %H:%M') }}
+                                        {% if task.is_deadline_overdue() %}
+                                        <br><span class="badge bg-danger">Overdue</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">No deadline</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if task.status == 'completed' else 'primary' if task.status == 'in_progress' else 'secondary' }}">
+                                        {{ task.status.replace('_', ' ').title() }}
+                                    </span>
+                                </td>
+                                <td>{{ task.created_at|ist_datetime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteAssignedTask({{ task.id }}, '{{ task.title }}')" title="Delete Task">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No tasks assigned yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function deleteAssignedTask(taskId, taskTitle) {
+    if (!confirm(`Are you sure you want to delete the task "${taskTitle}"?`)) return;
+    
+    fetch(`/api/admin/tasks/${taskId}`, {
+        method: 'DELETE',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.message) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(err => alert('Error: ' + err));
+}
+</script>
+{% endblock %}

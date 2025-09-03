@@ -1,115 +1,339 @@
 {% extends "base.html" %}
 
+{% block styles %}
+<style>
+/* Modern Hover Effects & Animations */
+.card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+}
+
+.btn {
+    transition: all 0.2s ease;
+    border-radius: 8px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.table-hover tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05) !important;
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.btn-group .btn {
+    transition: all 0.2s ease;
+}
+
+.btn-group .btn:hover {
+    z-index: 2;
+    transform: scale(1.1);
+}
+
+.badge {
+    transition: all 0.2s ease;
+}
+
+.badge:hover {
+    transform: scale(1.05);
+}
+
+.avatar-sm {
+    transition: all 0.3s ease;
+}
+
+.avatar-sm:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.form-control, .form-select {
+    transition: all 0.2s ease;
+    border-radius: 8px;
+}
+
+.form-control:focus, .form-select:focus {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25), 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.modal-content {
+    border-radius: 16px;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.list-group-item {
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    margin-bottom: 4px;
+}
+
+.list-group-item:hover {
+    transform: translateX(4px);
+    background-color: rgba(13, 110, 253, 0.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.kpi-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.kpi-card:hover::before {
+    left: 100%;
+}
+
+.search-input {
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    width: 250px !important;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.notification-btn {
+    position: relative;
+}
+
+.notification-btn:hover .badge {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row align-items-center mb-4">
-    <div class="col-md-2 text-center">
-        <img src="{{ url_for('static', filename='uploads/' + current_user.profile_photo) }}" class="rounded-circle" width="90" height="90" alt="Profile Photo" onerror="this.onerror=null;this.src='https://via.placeholder.com/90x90/6c757d/ffffff?text=USER';">
-        <div class="mt-2 fw-bold">{{ current_user.username }}</div>
+<!-- Header Section -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+        <img src="{{ url_for('static', filename='uploads/' + current_user.profile_photo) }}" class="rounded-circle me-3" width="60" height="60" alt="Profile" onerror="this.src='https://via.placeholder.com/60x60/6c757d/ffffff?text=A';">
+        <div>
+            <h4 class="mb-0">{{ current_user.username }}</h4>
+            <small class="text-muted">Administrator Dashboard</small>
+        </div>
     </div>
-    <div class="col-md-10">
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h3>{{ users|length }}</h3>
-                        <small>Total Users</small>
-                    </div>
-                </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary notification-btn" onclick="showNotifications()" id="notificationBtn">
+            <i class="fas fa-bell"></i>
+            <span id="notificationCount" class="badge bg-danger ms-1">0</span>
+        </button>
+        <a href="{{ url_for('dashboard.assigned_tasks') }}" class="btn btn-primary">
+            <i class="fas fa-tasks"></i> Assigned Tasks
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm kpi-card fade-in-up">
+            <div class="card-body text-center">
+                <div class="text-primary mb-2"><i class="fas fa-users fa-2x"></i></div>
+                <h3 class="mb-0">{{ users|length }}</h3>
+                <small class="text-muted">Total Users</small>
             </div>
-            <div class="col-md-4">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h3>{{ total_tasks }}</h3>
-                        <small>Total Tasks</small>
-                    </div>
-                </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm kpi-card fade-in-up" style="animation-delay: 0.1s;">
+            <div class="card-body text-center">
+                <div class="text-info mb-2"><i class="fas fa-clipboard-list fa-2x"></i></div>
+                <h3 class="mb-0">{{ total_tasks }}</h3>
+                <small class="text-muted">Total Tasks</small>
             </div>
-            <div class="col-md-4">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h3>{{ completed_tasks }}</h3>
-                        <small>Completed Tasks</small>
-                    </div>
-                </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm kpi-card fade-in-up" style="animation-delay: 0.2s;">
+            <div class="card-body text-center">
+                <div class="text-success mb-2"><i class="fas fa-check-circle fa-2x"></i></div>
+                <h3 class="mb-0">{{ completed_tasks }}</h3>
+                <small class="text-muted">Completed</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm kpi-card fade-in-up" style="animation-delay: 0.3s;">
+            <div class="card-body text-center">
+                <div class="text-warning mb-2"><i class="fas fa-percentage fa-2x"></i></div>
+                <h3 class="mb-0">{{ ((completed_tasks / total_tasks * 100) if total_tasks > 0 else 0)|round(1) }}%</h3>
+                <small class="text-muted">Completion Rate</small>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row mt-4">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5>User Activity Overview</h5>
+<!-- Analytics & Activity Section -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pb-0">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-bar text-primary me-2"></i>Weekly Activity Overview</h5>
             </div>
             <div class="card-body">
-                <canvas id="activityChart"></canvas>
+                <canvas id="activityChart" height="300"></canvas>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5>Recent Activity</h5>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pb-0">
+                <h5 class="card-title mb-0"><i class="fas fa-clock text-info me-2"></i>Recent Activity</h5>
             </div>
             <div class="card-body">
-                {% for task in recent_tasks %}
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div>
-                        <strong>{{ task.title }}</strong><br>
-                        <small>{{ task.user.username }}</small>
+                {% if recent_tasks %}
+                    {% for task in recent_tasks[:5] %}
+                    <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
+                        <div class="flex-grow-1">
+                            <div class="fw-medium">{{ task.title[:30] }}{% if task.title|length > 30 %}...{% endif %}</div>
+                            <small class="text-muted"><i class="fas fa-user"></i> {{ task.user.username }}</small>
+                        </div>
+                        <span class="badge bg-{{ 'success' if task.status == 'completed' else 'warning' if task.status == 'in_progress' else 'secondary' }} ms-2">
+                            {{ task.status.replace('_', ' ').title() }}
+                        </span>
                     </div>
-                    <span class="badge bg-{{ 'success' if task.status == 'completed' else 'primary' }}">
-                        {{ task.status.replace('_', ' ').title() }}
-                    </span>
-                </div>
-                {% endfor %}
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p class="mb-0">No recent activity</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5>All Users</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Username</th>
-                                <th>Email</th>
-                                <th>Tasks</th>
-                                <th>Completed</th>
-                                <th>Join Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in users %}
-                            <tr>
-                                <td>{{ user.username }}</td>
-                                <td>{{ user.email }}</td>
-                                <td>{{ user.tasks|length }}</td>
-                                <td>{{ Task.query.filter_by(user_id=user.id, status='completed').count() }}</td>
-                                <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-info" onclick="viewUserTaskHistory({{ user.id }}, '{{ user.username }}')" tabindex="0" aria-label="View Task History for {{ user.username }}">
-                                        <i class="fas fa-history" aria-hidden="true"></i> View Task History
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-primary ms-1" onclick="sendTaskHistoryEmail({{ user.id }}, '{{ user.email }}')" tabindex="0" aria-label="Send Task History to {{ user.email }}">
-                                        <i class="fas fa-envelope" aria-hidden="true"></i> Email Task History
-                                    </button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+<!-- User Management Section -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0"><i class="fas fa-users-cog text-primary me-2"></i>User Management</h5>
+        <div class="d-flex gap-2">
+            <input type="text" class="form-control form-control-sm search-input" placeholder="Search users..." id="userSearch" style="width: 200px;">
+            <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('userSearch').value=''; filterUsers();">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="usersTable">
+                <thead class="table-light">
+                    <tr>
+                        <th class="border-0 fw-semibold"><i class="fas fa-user me-1"></i>User</th>
+                        <th class="border-0 fw-semibold"><i class="fas fa-envelope me-1"></i>Email</th>
+                        <th class="border-0 fw-semibold text-center"><i class="fas fa-tasks me-1"></i>Tasks</th>
+                        <th class="border-0 fw-semibold text-center"><i class="fas fa-check me-1"></i>Completed</th>
+                        <th class="border-0 fw-semibold text-center"><i class="fas fa-calendar me-1"></i>Joined</th>
+                        <th class="border-0 fw-semibold text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr class="user-row" data-username="{{ user.username.lower() }}" data-email="{{ user.email.lower() }}">
+                        <td class="align-middle">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 12px;">
+                                    {{ user.username[0].upper() }}
+                                </div>
+                                <div>
+                                    <div class="fw-medium">{{ user.username }}</div>
+                                    {% if user.is_admin %}
+                                        <span class="badge bg-warning text-dark">Admin</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="align-middle text-muted">{{ user.email }}</td>
+                        <td class="align-middle text-center">
+                            <span class="badge bg-light text-dark">{{ user.tasks|length }}</span>
+                        </td>
+                        <td class="align-middle text-center">
+                            <span class="badge bg-success">{{ Task.query.filter_by(user_id=user.id, status='completed').count() }}</span>
+                        </td>
+                        <td class="align-middle text-center text-muted">
+                            {{ user.created_at|ist_datetime('%b %d, %Y') }}
+                        </td>
+                        <td class="align-middle text-center">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-info btn-sm" onclick="viewUserTaskHistory({{ user.id }}, '{{ user.username }}')" title="View History">
+                                    <i class="fas fa-history"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="sendTaskHistoryEmail({{ user.id }}, '{{ user.email }}')" title="Email History">
+                                    <i class="fas fa-envelope"></i>
+                                </button>
+                                {% if not user.is_admin %}
+                                <button class="btn btn-outline-success btn-sm" onclick="assignTask({{ user.id }}, '{{ user.username }}')" title="Assign Task">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                {% endif %}
+                                <button class="btn btn-outline-warning btn-sm" onclick="viewUserTasks({{ user.id }}, '{{ user.username }}')" title="Manage Tasks">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -269,6 +493,175 @@ function viewUserTaskHistory(userId, username) {
             modal.show();
         });
 }
+
+function assignTask(userId, username) {
+    document.getElementById('assignUserId').value = userId;
+    document.getElementById('assignUsername').textContent = username;
+    new bootstrap.Modal(document.getElementById('assignTaskModal')).show();
+}
+
+function submitTaskAssignment() {
+    const formData = {
+        user_id: document.getElementById('assignUserId').value,
+        title: document.getElementById('taskTitle').value,
+        description: document.getElementById('taskDescription').value,
+        priority: document.getElementById('taskPriority').value,
+        category: document.getElementById('taskCategory').value,
+        deadline: document.getElementById('taskDeadline').value
+    };
+    
+    fetch('/dashboard/assign-task', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('assignTaskModal')).hide();
+            document.getElementById('assignTaskForm').reset();
+        }
+    });
+}
+
+// Notification functions
+function loadNotifications() {
+    fetch('/api/notifications/unread-count')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.getElementById('notificationCount');
+            if (data.count > 0) {
+                badge.textContent = data.count;
+                badge.style.display = 'inline';
+            } else {
+                badge.style.display = 'none';
+            }
+        });
+}
+
+function showNotifications() {
+    fetch('/api/notifications')
+        .then(response => response.json())
+        .then(data => {
+            let html = '<div class="list-group">';
+            if (data.length === 0) {
+                html += '<div class="list-group-item">No notifications</div>';
+            } else {
+                data.forEach(n => {
+                    const readClass = n.is_read ? '' : 'list-group-item-primary';
+                    html += `<div class="list-group-item ${readClass}" onclick="markAsRead(${n.id})">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">${n.message}</h6>
+                            <small>${n.created_at}</small>
+                        </div>
+                    </div>`;
+                });
+            }
+            html += '</div>';
+            document.getElementById('notificationModalBody').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('notificationModal')).show();
+        });
+}
+
+function markAsRead(notificationId) {
+    fetch(`/api/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(() => {
+        loadNotifications();
+        showNotifications();
+    });
+}
+
+function viewUserTasks(userId, username) {
+    fetch(`/api/tasks/user/${userId}/history`)
+        .then(response => response.json())
+        .then(data => {
+            let html = `<div class='mb-3 text-center'>
+                <span class='fs-5 fw-bold'><i class='fas fa-tasks text-primary'></i> Manage Tasks for <b>${username}</b></span>
+            </div>`;
+            if (data.length === 0) {
+                html += '<div class="alert alert-info text-center">No tasks found.</div>';
+            } else {
+                html += `<div class='table-responsive'><table class='table table-hover align-middle'>
+                <thead class='table-light'>
+                <tr>
+                    <th><i class='fas fa-tasks'></i> Title</th>
+                    <th><i class='fas fa-flag'></i> Status</th>
+                    <th><i class='fas fa-bolt'></i> Priority</th>
+                    <th><i class='fas fa-calendar-check'></i> Completed</th>
+                    <th><i class='fas fa-cog'></i> Actions</th>
+                </tr></thead><tbody>`;
+                for (const t of data) {
+                    const completed = t.completed_at ? new Date(t.completed_at.replace(' ', 'T')).toLocaleString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
+                    const canDelete = t.status === 'completed' || (t.assigned_by && t.assigned_by == {{ current_user.id }});
+                    const deleteBtn = canDelete ? `<button class='btn btn-sm btn-danger' onclick='adminDeleteTask(${t.id}, "${t.title}")' title='Delete Task'><i class='fas fa-trash'></i></button>` : '';
+                    html += `<tr>
+                        <td>${t.title}</td>
+                        <td><span class='badge bg-${t.status === 'completed' ? 'success' : t.status === 'in_progress' ? 'primary' : 'secondary'} text-capitalize'>${t.status.replace('_',' ')}</span></td>
+                        <td><span class='badge bg-${t.priority === 'high' ? 'danger' : t.priority === 'medium' ? 'warning' : 'secondary'} text-capitalize'>${t.priority}</span></td>
+                        <td>${completed}</td>
+                        <td>${deleteBtn}</td>
+                    </tr>`;
+                }
+                html += '</tbody></table></div>';
+            }
+            document.getElementById('manageTasksModalTitle').innerHTML = `<i class='fas fa-tasks text-primary'></i> Manage Tasks - <span class='fw-bold'>${username}</span>`;
+            document.getElementById('manageTasksModalBody').innerHTML = html;
+            const modal = new bootstrap.Modal(document.getElementById('manageTasksModal'));
+            modal.show();
+        });
+}
+
+function adminDeleteTask(taskId, taskTitle) {
+    if (!confirm(`Are you sure you want to delete the task "${taskTitle}"?`)) return;
+    
+    fetch(`/api/admin/tasks/${taskId}`, {
+        method: 'DELETE',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.message) {
+            alert(data.message);
+            const modal = bootstrap.Modal.getInstance(document.getElementById('manageTasksModal'));
+            if (modal) {
+                modal.hide();
+            }
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(err => alert('Error: ' + err));
+}
+
+function filterUsers() {
+    const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+    const rows = document.querySelectorAll('.user-row');
+    
+    rows.forEach(row => {
+        const username = row.dataset.username;
+        const email = row.dataset.email;
+        const isVisible = username.includes(searchTerm) || email.includes(searchTerm);
+        row.style.display = isVisible ? '' : 'none';
+    });
+}
+
+document.getElementById('userSearch').addEventListener('input', filterUsers);
+
+// Load notifications on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadNotifications();
+    setInterval(loadNotifications, 30000); // Refresh every 30 seconds
+});
+
 // User Task History Modal (should only be defined once, outside the table row)
 </script>
 <div class="modal fade" id="userTaskHistoryModal" tabindex="-1" role="dialog" aria-labelledby="taskHistoryModalTitle" aria-modal="true">
@@ -286,5 +679,86 @@ function viewUserTaskHistory(userId, username) {
       </div>
     </div>
   </div>
+</div>
+
+<!-- Task Assignment Modal -->
+<div class="modal fade" id="assignTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assign Task to <span id="assignUsername"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="assignTaskForm">
+                    <input type="hidden" id="assignUserId">
+                    <div class="mb-3">
+                        <label class="form-label">Task Title *</label>
+                        <input type="text" class="form-control" id="taskTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="taskDescription" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Priority</label>
+                                <select class="form-control" id="taskPriority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Category</label>
+                                <input type="text" class="form-control" id="taskCategory">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Deadline</label>
+                        <input type="datetime-local" class="form-control" id="taskDeadline">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitTaskAssignment()">Assign Task</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Notifications</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="notificationModalBody">
+                <!-- Notifications will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Tasks Modal -->
+<div class="modal fade" id="manageTasksModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="manageTasksModalTitle">Manage Tasks</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="manageTasksModalBody">
+                <!-- Task management content will be loaded here -->
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

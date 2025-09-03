@@ -1,4 +1,3 @@
-
 from flask import Flask, redirect, url_for
 from flask_login import current_user
 from config import Config
@@ -21,6 +20,15 @@ def create_app():
     # Import models to register user_loader
     from models.user import User
     from models.task import Task
+    from models.password_reset import PasswordReset
+    from models.notification import AdminNotification
+    from models.registration_otp import RegistrationOTP
+    from utils.timezone_utils import format_ist_datetime
+    
+    # Register Jinja2 filter for IST formatting
+    @app.template_filter('ist_datetime')
+    def ist_datetime_filter(dt, format_str='%Y-%m-%d %H:%M'):
+        return format_ist_datetime(dt, format_str)
     
     # Register user_loader
     @login_manager.user_loader
@@ -46,7 +54,10 @@ def create_app():
     # --- APScheduler: Weekly Summary Email Job ---
     from models.user import User
     from models.task import Task
-    from utils.email_utils import send_weekly_summary_email
+    from models.notification import AdminNotification
+    from utils.email_utils import send_weekly_summary_email, send_deadline_missed_alert
+    from utils.timezone_utils import now_ist
+    
     def send_weekly_summaries():
         with app.app_context():
             users = User.query.all()
@@ -56,9 +67,50 @@ def create_app():
                     send_weekly_summary_email(user, tasks)
                 except Exception as e:
                     print(f"[SCHEDULER ERROR] Could not send summary to {user.email}: {e}")
+    
+    def check_overdue_tasks():
+        with app.app_context():
+            current_time = now_ist().replace(tzinfo=None)
+            overdue_tasks = Task.query.filter(
+                Task.deadline < current_time,
+                Task.status != 'completed',
+                Task.assigned_by.isnot(None)
+            ).all()
+            
+            for task in overdue_tasks:
+                admin = User.query.get(task.assigned_by)
+                if admin:
+                    # Create in-app notification
+                    existing_notification = AdminNotification.query.filter_by(
+                        admin_id=admin.id,
+                        task_id=task.id,
+                        message=f"{task.user.username} missed deadline for task: {task.title}"
+                    ).first()
+                    
+                    if not existing_notification:
+                        notification = AdminNotification(
+                            admin_id=admin.id,
+                            task_id=task.id,
+                            message=f"{task.user.username} missed deadline for task: {task.title}"
+                        )
+                        db.session.add(notification)
+                        
+                        # Send email alert
+                        try:
+                            send_deadline_missed_alert(
+                                admin.email,
+                                task.title,
+                                task.user.username,
+                                task.deadline
+                            )
+                        except Exception as e:
+                            print(f"Failed to send deadline alert: {e}")
+            
+            db.session.commit()
 
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=send_weekly_summaries, trigger='cron', day_of_week='mon', hour=8, minute=0)
+    scheduler.add_job(func=check_overdue_tasks, trigger='cron', hour='*', minute=0)  # Check every hour
     scheduler.start()
     atexit.register(lambda: scheduler.shutdown())
 

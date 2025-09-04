@@ -161,179 +161,289 @@
 {% endblock %}
 
 {% block content %}
-<!-- Header Section -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div class="d-flex align-items-center">
-        <img src="{{ url_for('static', filename='uploads/' + current_user.profile_photo) }}" class="rounded-circle me-3" width="60" height="60" alt="Profile" onerror="this.src='https://via.placeholder.com/60x60/6c757d/ffffff?text=A';">
-        <div>
-            <h4 class="mb-0">{{ current_user.username }}</h4>
-            <small class="text-muted">Administrator Dashboard</small>
+<div class="container-fluid px-4">
+    <!-- Dashboard Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center bg-white rounded-3 shadow-sm p-4">
+                <div class="d-flex align-items-center">
+                    <div class="position-relative me-3">
+                        <img src="{{ url_for('static', filename='uploads/' + current_user.profile_photo) }}" class="rounded-circle" width="56" height="56" alt="Profile" onerror="this.src='https://via.placeholder.com/56x56/667eea/ffffff?text=A';">
+                        <span class="position-absolute bottom-0 end-0 bg-success rounded-circle" style="width: 16px; height: 16px; border: 2px solid white;"></span>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-bold text-dark">{{ current_user.username }}</h4>
+                        <p class="mb-0 text-muted">Administrator Dashboard</p>
+                        <small class="text-primary">{{ users|length }} users • {{ total_tasks }} total tasks</small>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary notification-btn position-relative" onclick="showNotifications()" id="notificationBtn">
+                        <i class="fas fa-bell"></i>
+                        <span id="notificationCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">0</span>
+                    </button>
+                    <a href="{{ url_for('dashboard.assigned_tasks') }}" class="btn btn-primary">
+                        <i class="fas fa-tasks me-2"></i>Assigned Tasks
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="d-flex gap-2">
-        <button class="btn btn-outline-primary notification-btn" onclick="showNotifications()" id="notificationBtn">
-            <i class="fas fa-bell"></i>
-            <span id="notificationCount" class="badge bg-danger ms-1">0</span>
-        </button>
-        <a href="{{ url_for('dashboard.assigned_tasks') }}" class="btn btn-primary">
-            <i class="fas fa-tasks"></i> Assigned Tasks
-        </a>
-    </div>
-</div>
 
-<!-- KPI Cards -->
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm kpi-card fade-in-up">
-            <div class="card-body text-center">
-                <div class="text-primary mb-2"><i class="fas fa-users fa-2x"></i></div>
-                <h3 class="mb-0">{{ users|length }}</h3>
-                <small class="text-muted">Total Users</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm kpi-card fade-in-up" style="animation-delay: 0.1s;">
-            <div class="card-body text-center">
-                <div class="text-info mb-2"><i class="fas fa-clipboard-list fa-2x"></i></div>
-                <h3 class="mb-0">{{ total_tasks }}</h3>
-                <small class="text-muted">Total Tasks</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm kpi-card fade-in-up" style="animation-delay: 0.2s;">
-            <div class="card-body text-center">
-                <div class="text-success mb-2"><i class="fas fa-check-circle fa-2x"></i></div>
-                <h3 class="mb-0">{{ completed_tasks }}</h3>
-                <small class="text-muted">Completed</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm kpi-card fade-in-up" style="animation-delay: 0.3s;">
-            <div class="card-body text-center">
-                <div class="text-warning mb-2"><i class="fas fa-percentage fa-2x"></i></div>
-                <h3 class="mb-0">{{ ((completed_tasks / total_tasks * 100) if total_tasks > 0 else 0)|round(1) }}%</h3>
-                <small class="text-muted">Completion Rate</small>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Analytics & Activity Section -->
-<div class="row g-3 mb-4">
-    <div class="col-lg-8">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-0 pb-0">
-                <h5 class="card-title mb-0"><i class="fas fa-chart-bar text-primary me-2"></i>Weekly Activity Overview</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="activityChart" height="300"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-0 pb-0">
-                <h5 class="card-title mb-0"><i class="fas fa-clock text-info me-2"></i>Recent Activity</h5>
-            </div>
-            <div class="card-body">
-                {% if recent_tasks %}
-                    {% for task in recent_tasks[:5] %}
-                    <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
-                        <div class="flex-grow-1">
-                            <div class="fw-medium">{{ task.title[:30] }}{% if task.title|length > 30 %}...{% endif %}</div>
-                            <small class="text-muted"><i class="fas fa-user"></i> {{ task.user.username }}</small>
+    <!-- KPI Metrics -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 kpi-card fade-in-up">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary bg-opacity-10 rounded-3 p-3">
+                                <i class="fas fa-users text-primary fa-2x"></i>
+                            </div>
                         </div>
-                        <span class="badge bg-{{ 'success' if task.status == 'completed' else 'warning' if task.status == 'in_progress' else 'secondary' }} ms-2">
-                            {{ task.status.replace('_', ' ').title() }}
-                        </span>
+                        <div class="flex-grow-1 ms-3">
+                            <h2 class="mb-0 fw-bold text-dark">{{ users|length }}</h2>
+                            <p class="text-muted mb-0">Total Users</p>
+                            <small class="text-success"><i class="fas fa-arrow-up"></i> Active</small>
+                        </div>
                     </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-inbox fa-2x mb-2"></i>
-                        <p class="mb-0">No recent activity</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 kpi-card fade-in-up" style="animation-delay: 0.1s;">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-info bg-opacity-10 rounded-3 p-3">
+                                <i class="fas fa-clipboard-list text-info fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h2 class="mb-0 fw-bold text-dark">{{ total_tasks }}</h2>
+                            <p class="text-muted mb-0">Total Tasks</p>
+                            <small class="text-info"><i class="fas fa-tasks"></i> All time</small>
+                        </div>
                     </div>
-                {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 kpi-card fade-in-up" style="animation-delay: 0.2s;">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-success bg-opacity-10 rounded-3 p-3">
+                                <i class="fas fa-check-circle text-success fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h2 class="mb-0 fw-bold text-dark">{{ completed_tasks }}</h2>
+                            <p class="text-muted mb-0">Completed</p>
+                            <small class="text-success"><i class="fas fa-check"></i> Finished</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 kpi-card fade-in-up" style="animation-delay: 0.3s;">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-warning bg-opacity-10 rounded-3 p-3">
+                                <i class="fas fa-chart-line text-warning fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h2 class="mb-0 fw-bold text-dark">{{ ((completed_tasks / total_tasks * 100) if total_tasks > 0 else 0)|round(1) }}%</h2>
+                            <p class="text-muted mb-0">Completion Rate</p>
+                            <small class="text-warning"><i class="fas fa-percentage"></i> Overall</small>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- User Management Section -->
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0"><i class="fas fa-users-cog text-primary me-2"></i>User Management</h5>
-        <div class="d-flex gap-2">
-            <input type="text" class="form-control form-control-sm search-input" placeholder="Search users..." id="userSearch" style="width: 200px;">
-            <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('userSearch').value=''; filterUsers();">
-                <i class="fas fa-times"></i>
-            </button>
+    <!-- Analytics & Activity Section -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+                    <div>
+                        <h5 class="card-title mb-0 fw-bold">Weekly Activity Overview</h5>
+                        <small class="text-muted">Task completion trends and time analysis</small>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-calendar-week me-1"></i>This Week
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">This Week</a></li>
+                            <li><a class="dropdown-item" href="#">Last Week</a></li>
+                            <li><a class="dropdown-item" href="#">This Month</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="activityChart" height="280"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="card-title mb-0 fw-bold">Recent Activity</h5>
+                    <small class="text-muted">Latest task updates</small>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_tasks %}
+                        <div class="list-group list-group-flush">
+                            {% for task in recent_tasks[:5] %}
+                            <div class="list-group-item border-0 py-3">
+                                <div class="d-flex align-items-start">
+                                    <div class="flex-shrink-0 me-3">
+                                        <div class="bg-{{ 'success' if task.status == 'completed' else 'primary' if task.status == 'in_progress' else 'secondary' }} bg-opacity-10 rounded-circle p-2">
+                                            <i class="fas fa-{{ 'check' if task.status == 'completed' else 'play' if task.status == 'in_progress' else 'pause' }} text-{{ 'success' if task.status == 'completed' else 'primary' if task.status == 'in_progress' else 'secondary' }}"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1 fw-medium">{{ task.title[:35] }}{% if task.title|length > 35 %}...{% endif %}</h6>
+                                        <p class="mb-1 text-muted small"><i class="fas fa-user me-1"></i>{{ task.user.username }}</p>
+                                        <small class="text-muted">{{ task.created_at|ist_datetime('%b %d, %H:%M') }}</small>
+                                    </div>
+                                    <span class="badge bg-{{ 'success' if task.status == 'completed' else 'primary' if task.status == 'in_progress' else 'secondary' }}">
+                                        {{ task.status.replace('_', ' ').title() }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="bg-light rounded-circle mx-auto mb-3" style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-inbox text-muted fa-2x"></i>
+                            </div>
+                            <h6 class="text-muted">No recent activity</h6>
+                            <p class="text-muted small mb-0">Task updates will appear here</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0" id="usersTable">
-                <thead class="table-light">
-                    <tr>
-                        <th class="border-0 fw-semibold"><i class="fas fa-user me-1"></i>User</th>
-                        <th class="border-0 fw-semibold"><i class="fas fa-envelope me-1"></i>Email</th>
-                        <th class="border-0 fw-semibold text-center"><i class="fas fa-tasks me-1"></i>Tasks</th>
-                        <th class="border-0 fw-semibold text-center"><i class="fas fa-check me-1"></i>Completed</th>
-                        <th class="border-0 fw-semibold text-center"><i class="fas fa-calendar me-1"></i>Joined</th>
-                        <th class="border-0 fw-semibold text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                    <tr class="user-row" data-username="{{ user.username.lower() }}" data-email="{{ user.email.lower() }}">
-                        <td class="align-middle">
-                            <div class="d-flex align-items-center">
-                                <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 12px;">
-                                    {{ user.username[0].upper() }}
+
+    <!-- User Management Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-4">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="card-title mb-0 fw-bold">User Management</h5>
+                            <small class="text-muted">Manage users, assign tasks, and monitor progress</small>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex gap-2">
+                                <div class="input-group" style="width: 280px;">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0 search-input" placeholder="Search users by name or email..." id="userSearch">
                                 </div>
-                                <div>
-                                    <div class="fw-medium">{{ user.username }}</div>
-                                    {% if user.is_admin %}
-                                        <span class="badge bg-warning text-dark">Admin</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </td>
-                        <td class="align-middle text-muted">{{ user.email }}</td>
-                        <td class="align-middle text-center">
-                            <span class="badge bg-light text-dark">{{ user.tasks|length }}</span>
-                        </td>
-                        <td class="align-middle text-center">
-                            <span class="badge bg-success">{{ Task.query.filter_by(user_id=user.id, status='completed').count() }}</span>
-                        </td>
-                        <td class="align-middle text-center text-muted">
-                            {{ user.created_at|ist_datetime('%b %d, %Y') }}
-                        </td>
-                        <td class="align-middle text-center">
-                            <div class="btn-group" role="group">
-                                <button class="btn btn-outline-info btn-sm" onclick="viewUserTaskHistory({{ user.id }}, '{{ user.username }}')" title="View History">
-                                    <i class="fas fa-history"></i>
-                                </button>
-                                <button class="btn btn-outline-secondary btn-sm" onclick="sendTaskHistoryEmail({{ user.id }}, '{{ user.email }}')" title="Email History">
-                                    <i class="fas fa-envelope"></i>
-                                </button>
-                                {% if not user.is_admin %}
-                                <button class="btn btn-outline-success btn-sm" onclick="assignTask({{ user.id }}, '{{ user.username }}')" title="Assign Task">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                                {% endif %}
-                                <button class="btn btn-outline-warning btn-sm" onclick="viewUserTasks({{ user.id }}, '{{ user.username }}')" title="Manage Tasks">
-                                    <i class="fas fa-cog"></i>
+                                <button class="btn btn-outline-secondary" onclick="document.getElementById('userSearch').value=''; filterUsers();" title="Clear search">
+                                    <i class="fas fa-times"></i>
                                 </button>
                             </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="usersTable">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="border-0 fw-semibold py-3 ps-4">User</th>
+                                    <th class="border-0 fw-semibold py-3">Contact</th>
+                                    <th class="border-0 fw-semibold py-3 text-center">Tasks</th>
+                                    <th class="border-0 fw-semibold py-3 text-center">Completed</th>
+                                    <th class="border-0 fw-semibold py-3 text-center">Joined</th>
+                                    <th class="border-0 fw-semibold py-3 text-center pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr class="user-row" data-username="{{ user.username.lower() }}" data-email="{{ user.email.lower() }}">
+                                    <td class="ps-4 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="position-relative me-3">
+                                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-weight: 600;">
+                                                    {{ user.username[0].upper() }}
+                                                </div>
+                                                {% if user.is_admin %}
+                                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning">
+                                                    <i class="fas fa-crown" style="font-size: 8px;"></i>
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-semibold">{{ user.username }}</h6>
+                                                {% if user.is_admin %}
+                                                    <span class="badge bg-warning text-dark small">Administrator</span>
+                                                {% else %}
+                                                    <small class="text-muted">User</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3">
+                                        <div>
+                                            <div class="text-dark">{{ user.email }}</div>
+                                            <small class="text-muted"><i class="fas fa-envelope me-1"></i>Email verified</small>
+                                        </div>
+                                    </td>
+                                    <td class="text-center py-3">
+                                        <div class="bg-light rounded-pill px-3 py-1 d-inline-block">
+                                            <span class="fw-semibold text-dark">{{ user.tasks|length }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center py-3">
+                                        <div class="bg-success bg-opacity-10 text-success rounded-pill px-3 py-1 d-inline-block">
+                                            <span class="fw-semibold">{{ Task.query.filter_by(user_id=user.id, status='completed').count() }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center py-3">
+                                        <div class="text-muted">
+                                            <div>{{ user.created_at|ist_datetime('%b %d, %Y') }}</div>
+                                            <small>{{ user.created_at|ist_datetime('%H:%M') }}</small>
+                                        </div>
+                                    </td>
+                                    <td class="text-center pe-4 py-3">
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-outline-primary btn-sm" onclick="viewUserTaskHistory({{ user.id }}, '{{ user.username }}')" title="View History">
+                                                <i class="fas fa-history"></i>
+                                            </button>
+                                            <button class="btn btn-outline-info btn-sm" onclick="sendTaskHistoryEmail({{ user.id }}, '{{ user.email }}')" title="Email History">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                            {% if not user.is_admin %}
+                                            <button class="btn btn-outline-success btn-sm" onclick="assignTask({{ user.id }}, '{{ user.username }}')" title="Assign Task">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                            {% endif %}
+                                            <button class="btn btn-outline-secondary btn-sm" onclick="viewUserTasks({{ user.id }}, '{{ user.username }}')" title="Manage Tasks">
+                                                <i class="fas fa-cog"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

@@ -257,21 +257,6 @@ def send_deadline_missed_alert(admin_email, task_title, user_name, deadline):
     except Exception as e:
         print(f"[EMAIL ERROR] Failed to send deadline alert to {admin_email}: {e}")
         raise
-    msg['From'] = f"{sender_name} <{smtp_user}>"
-    msg['To'] = to_email
-    
-    part_html = MIMEText(html_content, 'html')
-    msg.attach(part_html)
-    
-    try:
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_password)
-            server.sendmail(smtp_user, to_email, msg.as_string())
-        print(f"[EMAIL SUCCESS] Task assignment notification sent to {to_email}")
-    except Exception as e:
-        print(f"[EMAIL ERROR] Failed to send task assignment email to {to_email}: {e}")
-        raise
 def send_task_completion_alert(admin_email, task_title, user_name, completion_time, actual_time=None):
     smtp_server = current_app.config.get('SMTP_SERVER', 'smtp.gmail.com')
     smtp_port = current_app.config.get('SMTP_PORT', 587)

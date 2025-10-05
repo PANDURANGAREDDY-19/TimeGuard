@@ -421,18 +421,18 @@
                                     </td>
                                     <td class="text-center pe-4 py-3">
                                         <div class="btn-group" role="group">
-                                            <button class="btn btn-outline-primary btn-sm" onclick="viewUserTaskHistory({{ user.id }}, '{{ user.username }}')" title="View History">
+                                            <button class="btn btn-outline-primary btn-sm" onclick="viewUserTaskHistory({{ user.id }}, '{{ user.username|replace("'", "\\'")|safe }}')" title="View History">
                                                 <i class="fas fa-history"></i>
                                             </button>
-                                            <button class="btn btn-outline-info btn-sm" onclick="sendTaskHistoryEmail({{ user.id }}, '{{ user.email }}')" title="Email History">
+                                            <button class="btn btn-outline-info btn-sm" onclick="sendTaskHistoryEmail({{ user.id }}, '{{ user.email|replace("'", "\\'")|safe }}')" title="Email History">
                                                 <i class="fas fa-envelope"></i>
                                             </button>
                                             {% if not user.is_admin %}
-                                            <button class="btn btn-outline-success btn-sm" onclick="assignTask({{ user.id }}, '{{ user.username }}')" title="Assign Task">
+                                            <button class="btn btn-outline-success btn-sm" onclick="assignTask({{ user.id }}, '{{ user.username|replace("'", "\\'")|safe }}')" title="Assign Task">
                                                 <i class="fas fa-plus"></i>
                                             </button>
                                             {% endif %}
-                                            <button class="btn btn-outline-secondary btn-sm" onclick="viewUserTasks({{ user.id }}, '{{ user.username }}')" title="Manage Tasks">
+                                            <button class="btn btn-outline-secondary btn-sm" onclick="viewUserTasks({{ user.id }}, '{{ user.username|replace("'", "\\'")|safe }}')" title="Manage Tasks">
                                                 <i class="fas fa-cog"></i>
                                             </button>
                                         </div>
@@ -707,7 +707,7 @@ function viewUserTasks(userId, username) {
                 for (const t of data) {
                     const completed = t.completed_at ? new Date(t.completed_at.replace(' ', 'T')).toLocaleString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
                     const canDelete = t.status === 'completed' || (t.assigned_by && t.assigned_by == {{ current_user.id }});
-                    const deleteBtn = canDelete ? `<button class='btn btn-sm btn-danger' onclick='adminDeleteTask(${t.id}, "${t.title}")' title='Delete Task'><i class='fas fa-trash'></i></button>` : '';
+                    const deleteBtn = canDelete ? `<button class='btn btn-sm btn-danger' onclick='adminDeleteTask(${t.id}, "${t.title.replace(/"/g, '&quot;')}")' title='Delete Task'><i class='fas fa-trash'></i></button>` : '';
                     html += `<tr>
                         <td>${t.title}</td>
                         <td><span class='badge bg-${t.status === 'completed' ? 'success' : t.status === 'in_progress' ? 'primary' : 'secondary'} text-capitalize'>${t.status.replace('_',' ')}</span></td>

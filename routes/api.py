@@ -78,8 +78,15 @@ def user_task_history(user_id):
 @login_required
 def create_task():
     try:
+        print("Creating task - Request received")
         data = request.get_json()
-        if not data or not data.get('title'):
+        if not data:
+            print("No JSON data received")
+            return jsonify({'error': 'No data provided'}), 400
+        
+        print(f"Received data: {data}")
+        if not data.get('title'):
+            print("Title missing")
             return jsonify({'error': 'Task title is required'}), 400
 
         task = Task(
@@ -270,3 +277,35 @@ def admin_delete_task(task_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Failed to delete task'}), 500
+
+@api_bp.route('/notifications/count')
+@login_required
+def get_notification_count():
+    if not current_user.is_admin:
+        return jsonify({'count': 0})
+    
+    count = AdminNotification.query.filter_by(
+        admin_id=current_user.id, is_read=False
+    ).count()
+    
+    return jsonify({'count': count})
+
+@api_bp.route('/users/<int:user_id>/stats')
+@login_required
+def get_user_stats(user_id):
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    user = User.query.get_or_404(user_id)
+    total_tasks = Task.query.filter_by(user_id=user_id).count()
+    completed_tasks = Task.query.filter_by(user_id=user_id, status='completed').count()
+    pending_tasks = Task.query.filter_by(user_id=user_id).filter(Task.status != 'completed').count()
+    
+    completion_rate = round((completed_tasks / total_tasks * 100) if total_tasks > 0 else 0, 1)
+    
+    return jsonify({
+        'total_tasks': total_tasks,
+        'completed_tasks': completed_tasks,
+        'pending_tasks': pending_tasks,
+        'completion_rate': completion_rate
+    })

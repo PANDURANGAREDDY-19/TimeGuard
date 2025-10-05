@@ -479,6 +479,23 @@
 
 {% block scripts %}
 <script>
+// Add fade out animation styles
+if (!document.getElementById('userDashboardStyles')) {
+    const dashboardStyles = document.createElement('style');
+    dashboardStyles.id = 'userDashboardStyles';
+    dashboardStyles.textContent = `
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(-20px); }
+        }
+    `;
+    document.head.appendChild(dashboardStyles);
+}
+
+// Enhanced timer system
+let activeTimers = {};
+let pausedTimers = {};
+
 // Filter functionality
 function filterTasks() {
     const statusFilter = document.getElementById('statusFilter').value;
@@ -502,13 +519,6 @@ function filterTasks() {
         }
     });
 }
-
-document.getElementById('statusFilter').addEventListener('change', filterTasks);
-document.getElementById('priorityFilter').addEventListener('change', filterTasks);
-
-// Enhanced timer system
-let activeTimers = {};
-let pausedTimers = {};
 
 function startStopwatch(taskId) {
     const timerElement = document.getElementById(`timer-${taskId}`);
@@ -700,6 +710,12 @@ function deleteTask(taskId) {
 
 function createTask() {
     const form = document.getElementById('taskForm');
+    if (!form) {
+        console.error('Task form not found');
+        alert('Error: Form not found');
+        return;
+    }
+    
     const formData = new FormData(form);
     
     const taskData = {
@@ -709,6 +725,8 @@ function createTask() {
         priority: formData.get('priority')
     };
     
+    console.log('Task data to send:', taskData);
+    
     if (!taskData.title) {
         alert('Task title is required');
         return;
@@ -716,33 +734,53 @@ function createTask() {
     
     fetch('/api/tasks', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
         body: JSON.stringify(taskData)
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            console.error('Server response:', response.status, response.statusText);
+            return response.json().then(err => {
+                throw new Error(err.error || 'Failed to create task');
+            });
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('Task created successfully:', data);
         if (data.error) {
             alert('Error: ' + data.error);
         } else {
-            alert('Task created successfully!');
-            bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
+            const modal = bootstrap.Modal.getInstance(document.getElementById('taskModal'));
+            if (modal) {
+                modal.hide();
+            } else {
+                console.warn('Modal instance not found');
+            }
             form.reset();
+            alert('Task created successfully!');
             location.reload();
         }
     })
     .catch(error => {
-        alert('Error creating task: ' + error);
+        console.error('Error creating task:', error);
+        alert('Error creating task: ' + error.message);
     });
 }
 
-// Add fade out animation
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fadeOut {
-        from { opacity: 1; transform: translateX(0); }
-        to { opacity: 0; transform: translateX(-20px); }
-    }
-`;
-document.head.appendChild(style);
+// Initialize event listeners when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Add filter event listeners
+    const statusFilter = document.getElementById('statusFilter');
+    const priorityFilter = document.getElementById('priorityFilter');
+    
+    if (statusFilter) statusFilter.addEventListener('change', filterTasks);
+    if (priorityFilter) priorityFilter.addEventListener('change', filterTasks);
+    
+    console.log('TimeGuard Dashboard initialized successfully');
+});
 </script>
 {% endblock %}

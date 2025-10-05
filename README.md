@@ -10,6 +10,7 @@
 
 ## Project  Structure
 
+```
 TimeGuard/
 ├── models/                    # Database models
 │   ├── __init__.py
@@ -63,6 +64,7 @@ TimeGuard/
 ├── .env.example          # Environment variables template
 ├── .gitignore            # Git ignore rules
 └── README.md             # Project documentation
+```
 
 ## Key Features
 
